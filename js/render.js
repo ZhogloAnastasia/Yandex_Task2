@@ -24,19 +24,7 @@
      * @param {[number, number][]} [path] маршрут
      * @returns {HTMLElement} HTML элемент
      */
-    function render(maze, path) {
-        if (path && path.length) {
-            var point, 
-                i;
-
-            for (i = 0; i < path.length; i++) {
-                point = path[i];
-                maze[point[1]][point[0]] = PATH;
-            }
-            point = path[path.length - 1];
-            maze[point[1]][point[0]] = CURRENT;
-        }
-
+    function render(maze) {
         var containerElem = element('div', 'maze'),
             rowElem,
             type,
@@ -57,21 +45,19 @@
                         type = 'wall';
                         break;
 
-                    case PATH:
-                        type = 'path';
-                        break;
-
                     case CURRENT:
                         type = 'current';
                         break;
 
                     default:
-                        type = undefined;
+                        type = 'wave';
                 }
 
-                rowElem.appendChild(
-                    element('div', 'maze__cell' + (type ? ' maze__cell_' + type : ''))
-                );
+                var cellElement = document.createElement('div');
+                cellElement.className = 'maze__cell' + (type ? ' maze__cell_' + type : '');
+                cellElement.id = x + 'x' + y;
+
+                rowElem.appendChild(cellElement);
             }
 
             containerElem.appendChild(rowElem);
@@ -80,5 +66,41 @@
         return containerElem;
     }
 
+    var visulizePath = function (maze, i, path) {
+        var cellId = path[i][0] + 'x' + path[i--][1];
+
+        var cellElement = document.getElementById(cellId);
+        cellElement.className = 'maze__cell maze__cell_path';
+        cellElement.style.background = '';
+        
+        if (i > -1) {
+            setTimeout(function () {
+                visulizePath(maze, i, path);
+            }, 10);
+        }
+    }
+
+    var visualizeWaves = function (maze, i, waves, path) {
+        var wave = waves[i++];
+        var color = 200 - Math.round(i / waves.length * 150);
+        var waveSolor = 'rgba(' + color + ', 255, ' + color + ', 1)';
+
+        for (var j = 0; j < wave.length; ++j) {
+            var id = wave[j][0] + 'x' + wave[j][1];
+
+            var cell = document.getElementById(id);
+            cell.style.background = waveSolor;
+        }
+
+        if (i < waves.length) {
+            setTimeout(function () {
+                visualizeWaves(maze, i, waves, path);
+            }, 20);
+        } else {
+            visulizePath(maze, path.length - 1, path);            
+        }
+    }
+
     root.maze.render = render;
+    root.maze.visualizeWaves = visualizeWaves;
 })(this);
